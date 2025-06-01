@@ -2,10 +2,10 @@
   "name": "prompt-enhancer-api",
   "version": "1.0.0",
   "description": "AI-powered prompt enhancement API",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "start": "echo 'Use vercel dev for local development'"
+    "build": "echo 'Serverless functions - no build required'"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0"
