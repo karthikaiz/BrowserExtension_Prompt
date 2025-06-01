@@ -5,9 +5,8 @@
 
 class ApiManager {
   constructor() {
-    // Backend API URL - change this to your deployed backend
-    this.baseUrl = 'http://localhost:3000/api'; // For development
-    // For production: 'https://your-backend-url.com/api'
+    // ✅ UPDATE: Use your live Vercel URL
+    this.baseUrl = 'https://browser-extension-prompt.vercel.app/api';
     
     this.requestTimeout = 30000; // 30 seconds
     this.maxRetries = 3;
