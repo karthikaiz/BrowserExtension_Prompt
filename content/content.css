@@ -2,26 +2,27 @@
 
 /* Main enhancement button */
 .upe-enhancement-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10000;
-  user-select: none;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 99999 !important;
+  user-select: none !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  pointer-events: auto !important;
 }
 
 .upe-enhancement-btn:hover {
@@ -115,6 +116,7 @@
 /* Button wrapper for relative positioning */
 .upe-textarea-wrapper {
   position: relative !important;
+  overflow: visible !important;
 }
 
 /* Tooltip */
@@ -212,20 +214,20 @@
 
 /* ChatGPT */
 .upe-chatgpt .upe-enhancement-btn {
-  top: 12px;
-  right: 48px; /* Avoid conflict with send button */
+  top: 12px !important;
+  right: 50px !important;
 }
 
 /* Claude */
 .upe-claude .upe-enhancement-btn {
-  top: 8px;
-  right: 8px;
+  top: 8px !important;
+  right: 50px !important;
 }
 
 /* Gemini */
 .upe-gemini .upe-enhancement-btn {
-  top: 8px;
-  right: 48px;
+  top: 8px !important;
+  right: 45px !important;
 }
 
 /* Microsoft Copilot */

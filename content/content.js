@@ -15,11 +15,10 @@ class PromptEnhancer {
     this.settings = null;
     this.isInitialized = false;
     
-    // Tracked textareas and their buttons
-    this.trackedElements = new Map();
-    
-    // Debounce timer for DOM changes
-    this.debounceTimer = null;
+    // ✅ NEW: Single button tracking approach
+    this.currentTextarea = null;
+    this.currentButton = null;
+    this.lastTextContent = '';
     
     console.log('🚀 Universal Prompt Enhancer initialized');
   }
@@ -40,11 +39,8 @@ class PromptEnhancer {
       // Add platform class to body for CSS targeting
       document.body.classList.add(`upe-${this.currentPlatform}`);
       
-      // Start monitoring for textareas
-      this.startMonitoring();
-      
-      // Initial scan for existing textareas
-      this.scanForTextareas();
+      // ✅ NEW: Simple monitoring approach
+      this.startSimpleMonitoring();
       
       this.isInitialized = true;
       console.log('✅ Prompt enhancer ready');
@@ -55,200 +51,115 @@ class PromptEnhancer {
   }
 
   /**
-   * Start monitoring for DOM changes
+   * ✅ NEW: Simple monitoring without aggressive scanning
    */
-  startMonitoring() {
-    // Monitor for new textareas
-    const observer = new MutationObserver((mutations) => {
-      // Debounce DOM changes
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => {
-        this.handleDOMChanges(mutations);
-      }, 100);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['contenteditable', 'class', 'style']
-    });
-
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        this.scanForTextareas();
+  startSimpleMonitoring() {
+    // Monitor input events on textareas
+    document.addEventListener('input', (e) => {
+      if (this.isTextElement(e.target)) {
+        this.handleTextInput(e.target);
       }
     });
 
-    // Handle window focus
-    window.addEventListener('focus', () => {
-      this.scanForTextareas();
+    // Monitor focus events
+    document.addEventListener('focusin', (e) => {
+      if (this.isTextElement(e.target)) {
+        this.handleTextareaFocus(e.target);
+      }
     });
-  }
 
-  /**
-   * Handle DOM mutations
-   * @param {Array} mutations - DOM mutations
-   */
-  handleDOMChanges(mutations) {
-    let shouldRescan = false;
-
-    for (const mutation of mutations) {
-      // Check for added nodes
-      if (mutation.type === 'childList') {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (this.isTextElement(node) || node.querySelector('textarea, [contenteditable="true"]')) {
-              shouldRescan = true;
-              break;
-            }
-          }
-        }
+    // Monitor blur events  
+    document.addEventListener('focusout', (e) => {
+      if (this.isTextElement(e.target)) {
+        this.handleTextareaBlur(e.target);
       }
-      
-      // Check for attribute changes
-      if (mutation.type === 'attributes') {
-        const element = mutation.target;
-        if (this.isTextElement(element)) {
-          shouldRescan = true;
-        }
-      }
-    }
+    });
 
-    if (shouldRescan) {
-      this.scanForTextareas();
-    }
+    // ✅ Only scan occasionally for new textareas
+    setInterval(() => {
+      this.findNewTextarea();
+    }, 3000); // Check every 3 seconds, not constantly
   }
 
   /**
-   * Scan for textareas and add enhancement buttons
+   * ✅ NEW: Handle text input events
    */
-  scanForTextareas() {
-    const selectors = this.platformDetector.getTextareaSelectors(this.currentPlatform);
-    const foundElements = new Set();
-
-    for (const selector of selectors) {
-      try {
-        const elements = document.querySelectorAll(selector);
-        for (const element of elements) {
-          if (this.isValidTextElement(element)) {
-            foundElements.add(element);
-            this.processTextElement(element);
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ Invalid selector:', selector, error);
-      }
-    }
-
-    // Clean up buttons for removed elements
-    this.cleanupRemovedElements(foundElements);
-  }
-
-  /**
-   * Check if element is a text input element
-   * @param {Element} element - Element to check
-   * @returns {boolean} True if it's a text element
-   */
-  isTextElement(element) {
-    return element.tagName === 'TEXTAREA' || 
-           element.getAttribute('contenteditable') === 'true' ||
-           element.classList.contains('ProseMirror') ||
-           element.classList.contains('ql-editor');
-  }
-
-  /**
-   * Validate if text element should have enhancement button
-   * @param {Element} element - Element to validate
-   * @returns {boolean} True if valid
-   */
-  isValidTextElement(element) {
-    // Skip if already processed
-    if (this.trackedElements.has(element)) {
-      return false;
-    }
-
-    // Skip if element is not visible or too small
-    const rect = element.getBoundingClientRect();
-    if (rect.width < 100 || rect.height < 30) {
-      return false;
-    }
-
-    // Skip if element is disabled or readonly
-    if (element.disabled || element.readOnly) {
-      return false;
-    }
-
-    // Skip if element is inside a button or other non-input elements
-    const parent = element.closest('button, [role="button"], .upe-enhancement-btn');
-    if (parent) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Process a text element by adding enhancement button
-   * @param {Element} element - Text element
-   */
-  processTextElement(element) {
-    try {
-      // Create wrapper if needed
-      const wrapper = this.ensureWrapper(element);
-      
-      // Create enhancement button
-      const button = this.createEnhancementButton(element);
-      
-      // Add button to wrapper
-      wrapper.appendChild(button);
-      
-      // Track the element and button
-      this.trackedElements.set(element, {
-        wrapper,
-        button,
-        timestamp: Date.now()
-      });
-
-      console.log('✨ Added enhancement button to element');
-      
-    } catch (error) {
-      console.error('❌ Error processing text element:', error);
-    }
-  }
-
-  /**
-   * Ensure element has a wrapper for positioning
-   * @param {Element} element - Text element
-   * @returns {Element} Wrapper element
-   */
-  ensureWrapper(element) {
-    const parent = element.parentElement;
+  handleTextInput(textarea) {
+    const text = this.getTextContent(textarea);
     
-    // Check if parent already has relative positioning
-    const computedStyle = window.getComputedStyle(parent);
-    if (computedStyle.position === 'relative' || computedStyle.position === 'absolute') {
-      return parent;
+    // ✅ Only show button if there's meaningful text
+    if (text.trim().length >= 5) {
+      this.showButton(textarea);
+    } else {
+      this.hideButton();
     }
-
-    // Create wrapper
-    const wrapper = document.createElement('div');
-    wrapper.className = 'upe-textarea-wrapper';
-    
-    // Insert wrapper
-    parent.insertBefore(wrapper, element);
-    wrapper.appendChild(element);
-    
-    return wrapper;
   }
 
   /**
-   * Create enhancement button
-   * @param {Element} textElement - Associated text element
-   * @returns {Element} Button element
+   * ✅ NEW: Handle textarea focus
    */
-  createEnhancementButton(textElement) {
+  handleTextareaFocus(textarea) {
+    // Set as current textarea but don't show button yet
+    this.currentTextarea = textarea;
+    this.ensureWrapper(textarea);
+    
+    // Only show button if there's already text
+    const text = this.getTextContent(textarea);
+    if (text.trim().length >= 5) {
+      this.showButton(textarea);
+    }
+  }
+
+  /**
+   * ✅ NEW: Handle textarea blur
+   */
+  handleTextareaBlur(textarea) {
+    // Keep button if there's text, hide if empty
+    const text = this.getTextContent(textarea);
+    if (text.trim().length < 5) {
+      setTimeout(() => {
+        this.hideButton();
+      }, 100); // Small delay to allow clicking button
+    }
+  }
+
+  /**
+   * ✅ NEW: Show button for specific textarea
+   */
+  showButton(textarea) {
+    // If button already exists for this textarea, don't create another
+    if (this.currentButton && this.currentTextarea === textarea) {
+      return;
+    }
+
+    // Remove any existing button first
+    this.hideButton();
+
+    // Create new button
+    this.currentTextarea = textarea;
+    this.currentButton = this.createStableButton(textarea);
+    
+    // Add to textarea's wrapper
+    const wrapper = this.ensureWrapper(textarea);
+    wrapper.appendChild(this.currentButton);
+    
+    console.log('✨ Button shown for textarea');
+  }
+
+  /**
+   * ✅ NEW: Hide current button
+   */
+  hideButton() {
+    if (this.currentButton) {
+      this.currentButton.remove();
+      this.currentButton = null;
+    }
+  }
+
+  /**
+   * ✅ NEW: Create a stable button that doesn't get recreated
+   */
+  createStableButton(textElement) {
     const button = document.createElement('button');
     button.className = 'upe-enhancement-btn';
     button.setAttribute('title', 'Enhance prompt with AI');
@@ -262,17 +173,66 @@ class PromptEnhancer {
       <div class="upe-progress"></div>
     `;
 
+    // ✅ IMPROVED: Stable styles
+    button.style.cssText = `
+      position: absolute !important;
+      top: 8px !important;
+      right: 45px !important;
+      width: 32px !important;
+      height: 32px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 16px !important;
+      color: white !important;
+      z-index: 99999 !important;
+      transition: transform 0.2s ease !important;
+    `;
+
     // Add click handler
     button.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       
-      console.log('🌟 Magic button clicked!');
-      console.log('📝 Original prompt:', textElement.value);
-      console.log('🎯 Detected platform:', this.currentPlatform);
-      
+      await this.handleButtonClick(textElement, button);
+    });
+
+    // Prevent button from disappearing on hover
+    button.addEventListener('mouseenter', () => {
+      button.style.transform = 'scale(1.1)';
+    });
+
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'scale(1)';
+    });
+
+    return button;
+  }
+
+  /**
+   * ✅ NEW: Handle button click
+   */
+  async handleButtonClick(textElement, button) {
+    console.log('🌟 Enhancement button clicked!');
+    
+    const originalText = this.getTextContent(textElement);
+    console.log('📝 Original prompt:', originalText);
+    
+    if (!originalText || originalText.trim().length < 3) {
+      this.showError(button, 'Please enter a prompt first');
+      return;
+    }
+    
+    // Show loading state
+    this.setButtonState(button, 'loading');
+    
+    try {
       const result = await this.apiManager.enhancePrompt(
-        textElement.value, 
+        originalText.trim(), 
         this.currentPlatform,
         { enhancementLevel: this.settings.enhancementLevel }
       );
@@ -281,36 +241,117 @@ class PromptEnhancer {
       
       if (result.success) {
         console.log('✅ Enhanced prompt:', result.enhancedPrompt);
-        this.setTextContent(textElement, result.enhancedPrompt);
+        
+        // ✅ Clear and replace text
+        this.replaceTextContent(textElement, result.enhancedPrompt);
         this.setButtonState(button, 'success');
+        
         setTimeout(() => {
           this.setButtonState(button, 'normal');
         }, 2000);
         
-        if (this.settings.showSuccessAnimation) {
-          this.showSuccessAnimation(textElement);
-        }
       } else {
         console.log('❌ Enhancement failed:', result.error);
         this.showError(button, result.error || 'Enhancement failed');
       }
-    });
+    } catch (error) {
+      console.error('❌ Enhancement error:', error);
+      this.showError(button, 'Enhancement failed');
+    }
+  }
 
-    // Add keyboard support
-    button.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.handleEnhancementClick(textElement, button);
+  /**
+   * ✅ NEW: Replace text content properly
+   */
+  replaceTextContent(element, newText) {
+    console.log('🔄 Replacing text content...');
+    
+    if (element.tagName === 'TEXTAREA') {
+      // Clear and set new value
+      element.value = '';
+      element.value = newText;
+      
+      // Trigger events
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      
+    } else if (element.contentEditable === 'true') {
+      // For contenteditable elements
+      element.textContent = '';
+      element.textContent = newText;
+      
+      // Trigger events
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    
+    // Focus and move cursor to end
+    element.focus();
+    if (element.setSelectionRange) {
+      element.setSelectionRange(newText.length, newText.length);
+    }
+    
+    console.log('✅ Text replaced successfully');
+  }
+
+  /**
+   * Find new textareas (less aggressive)
+   */
+  findNewTextarea() {
+    const selectors = this.platformDetector.getTextareaSelectors(this.currentPlatform);
+    
+    for (const selector of selectors) {
+      try {
+        const elements = document.querySelectorAll(selector);
+        for (const element of elements) {
+          if (this.isTextElement(element) && element !== this.currentTextarea) {
+            // Found a new textarea, but don't show button yet
+            // It will show when user starts typing
+            break;
+          }
+        }
+      } catch (error) {
+        // Ignore selector errors
       }
-    });
+    }
+  }
 
-    return button;
+  /**
+   * Check if element is a text input element
+   */
+  isTextElement(element) {
+    return element.tagName === 'TEXTAREA' || 
+           element.getAttribute('contenteditable') === 'true' ||
+           element.classList.contains('ProseMirror') ||
+           element.classList.contains('ql-editor');
+  }
+
+  /**
+   * Ensure element has a wrapper for positioning
+   */
+  ensureWrapper(element) {
+    const parent = element.parentElement;
+    
+    // Check if parent already has relative positioning
+    const computedStyle = window.getComputedStyle(parent);
+    if (computedStyle.position === 'relative' || computedStyle.position === 'absolute') {
+      return parent;
+    }
+
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'upe-textarea-wrapper';
+    wrapper.style.position = 'relative';
+    
+    // Insert wrapper
+    parent.insertBefore(wrapper, element);
+    wrapper.appendChild(element);
+    
+    return wrapper;
   }
 
   /**
    * Get text content from element
-   * @param {Element} element - Text element
-   * @returns {string} Text content
    */
   getTextContent(element) {
     if (element.tagName === 'TEXTAREA') {
@@ -322,32 +363,7 @@ class PromptEnhancer {
   }
 
   /**
-   * Set text content in element
-   * @param {Element} element - Text element
-   * @param {string} text - New text content
-   */
-  setTextContent(element, text) {
-    if (element.tagName === 'TEXTAREA') {
-      element.value = text;
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    } else if (element.contentEditable === 'true') {
-      element.textContent = text;
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    
-    // Focus the element
-    element.focus();
-    
-    // Move cursor to end
-    if (element.setSelectionRange) {
-      element.setSelectionRange(text.length, text.length);
-    }
-  }
-
-  /**
    * Set button state
-   * @param {Element} button - Button element
-   * @param {string} state - State (normal, loading, success, error)
    */
   setButtonState(button, state) {
     // Remove all state classes
@@ -364,7 +380,7 @@ class PromptEnhancer {
     
     switch (state) {
       case 'loading':
-        icon.textContent = '';
+        icon.textContent = '⏳';
         tooltip.textContent = 'Enhancing...';
         button.disabled = true;
         break;
@@ -387,8 +403,6 @@ class PromptEnhancer {
 
   /**
    * Show error state
-   * @param {Element} button - Button element
-   * @param {string} message - Error message
    */
   showError(button, message) {
     this.setButtonState(button, 'error');
@@ -401,38 +415,6 @@ class PromptEnhancer {
     setTimeout(() => {
       this.setButtonState(button, 'normal');
     }, 3000);
-  }
-
-  /**
-   * Show success animation
-   * @param {Element} element - Text element
-   */
-  showSuccessAnimation(element) {
-    element.style.transition = 'all 0.3s ease';
-    element.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.3)';
-    
-    setTimeout(() => {
-      element.style.boxShadow = '';
-      element.style.transition = '';
-    }, 1000);
-  }
-
-  /**
-   * Clean up buttons for removed elements
-   * @param {Set} currentElements - Currently found elements
-   */
-  cleanupRemovedElements(currentElements) {
-    for (const [element, data] of this.trackedElements.entries()) {
-      if (!currentElements.has(element) || !document.body.contains(element)) {
-        // Remove button
-        if (data.button && data.button.parentElement) {
-          data.button.remove();
-        }
-        
-        // Remove from tracking
-        this.trackedElements.delete(element);
-      }
-    }
   }
 }
 

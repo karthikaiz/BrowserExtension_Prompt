@@ -25,7 +25,7 @@ class PlatformDetector {
     const hostname = window.location.hostname;
 
     // URL-based detection
-    if (hostname.includes('chat.openai.com')) {
+    if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
       return this.platforms.CHATGPT;
     }
     if (hostname.includes('claude.ai')) {
