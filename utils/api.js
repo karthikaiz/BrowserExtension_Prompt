@@ -1,18 +1,20 @@
 /**
- * API Utility
- * Handles Google Gemini 2.0 Flash API requests for prompt enhancement
+ * API Utility - Backend API Integration
+ * Handles requests to the backend API for prompt enhancement
  */
 
 class ApiManager {
   constructor() {
-    this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
-    this.storageManager = new StorageManager();
+    // Backend API URL - change this to your deployed backend
+    this.baseUrl = 'http://localhost:3000/api'; // For development
+    // For production: 'https://your-backend-url.com/api'
+    
     this.requestTimeout = 30000; // 30 seconds
     this.maxRetries = 3;
   }
 
   /**
-   * Enhance a prompt using Gemini API
+   * Enhance a prompt using backend API
    * @param {string} originalPrompt - The original prompt to enhance
    * @param {string} platform - The target platform
    * @param {Object} options - Additional options
@@ -20,135 +22,100 @@ class ApiManager {
    */
   async enhancePrompt(originalPrompt, platform, options = {}) {
     try {
-      console.log('🚀 Starting prompt enhancement for', platform);
+      console.log('🚀 Sending prompt to backend API for platform:', platform);
       
-      // Replace this line - remove getUserApiKey() call and use direct key
-      const apiKey = 'your_actual_gemini_api_key_here'; // Replace with your actual API key
-      
-      if (!apiKey || apiKey === 'AIzaSyD7LXu696YRn7A8497HUlULutNGo2ZxkOE') {
-        throw new Error('Gemini API key not configured');
+      // Validate input
+      if (!originalPrompt || typeof originalPrompt !== 'string') {
+        throw new Error('Prompt is required and must be a string');
       }
 
-      // Get platform-specific enhancement strategy
-      const platformDetector = new PlatformDetector();
-      const strategy = platformDetector.getEnhancementStrategy(platform);
-      
-      // Prepare the request
-      const requestBody = this.buildRequestBody(originalPrompt, strategy, options);
-      
-      // Make the API call with retry logic
-      const response = await this.makeApiCallWithRetry(apiKey, requestBody);
-      
-      // Process the response
-      const enhancedPrompt = this.extractEnhancedPrompt(response);
-      
-      // Update usage statistics
-      await this.storageManager.updateUsageStats(platform, true);
-      
-      console.log('✅ Prompt enhancement successful');
-      return {
-        success: true,
-        originalPrompt,
-        enhancedPrompt,
-        platform,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          tokenCount: this.estimateTokenCount(enhancedPrompt),
-          enhancementFactor: enhancedPrompt.length / originalPrompt.length
-        }
+      const trimmedPrompt = originalPrompt.trim();
+      if (trimmedPrompt.length < 3) {
+        throw new Error('Prompt must be at least 3 characters long');
+      }
+
+      if (trimmedPrompt.length > 2000) {
+        throw new Error('Prompt too long. Maximum 2000 characters allowed.');
+      }
+
+      // Prepare request data
+      const requestData = {
+        prompt: trimmedPrompt,
+        platform: platform || 'chatgpt',
+        enhancementLevel: options.enhancementLevel || 'moderate'
       };
+
+      console.log('📤 Request data:', { 
+        prompt: `${trimmedPrompt.substring(0, 50)}...`, 
+        platform: requestData.platform, 
+        enhancementLevel: requestData.enhancementLevel 
+      });
+
+      // Make API call with retry logic
+      const response = await this.makeApiCallWithRetry(requestData);
+      
+      if (response.success) {
+        console.log('✅ Enhancement successful');
+        
+        // Update usage statistics
+        await this.updateUsageStats(platform, true);
+        
+        return {
+          success: true,
+          originalPrompt: trimmedPrompt,
+          enhancedPrompt: response.enhancedPrompt,
+          platform: response.platform,
+          metadata: {
+            timestamp: response.timestamp,
+            enhancementLevel: response.enhancementLevel,
+            originalLength: response.metadata?.originalLength || trimmedPrompt.length,
+            enhancedLength: response.metadata?.enhancedLength || response.enhancedPrompt.length,
+            enhancementFactor: response.metadata?.enhancementFactor || (response.enhancedPrompt.length / trimmedPrompt.length)
+          }
+        };
+      } else {
+        throw new Error(response.error || 'Enhancement failed');
+      }
       
     } catch (error) {
-      console.error('❌ Prompt enhancement failed:', error);
+      console.error('❌ Enhancement failed:', error);
       
       // Update usage statistics with failure
-      await this.storageManager.updateUsageStats(platform, false);
+      await this.updateUsageStats(platform, false);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Enhancement failed. Please try again.';
+      
+      if (error.name === 'AbortError') {
+        userMessage = 'Request timed out. Please try again.';
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+        userMessage = 'Cannot connect to enhancement service. Please check your internet connection.';
+      } else if (error.message.includes('429') || error.message.includes('Too many requests')) {
+        userMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (error.message.includes('503') || error.message.includes('unavailable')) {
+        userMessage = 'Enhancement service temporarily unavailable. Please try again later.';
+      } else if (error.message.includes('504') || error.message.includes('timeout')) {
+        userMessage = 'Request timed out. Please try again.';
+      } else if (error.message.length < 100) {
+        // Use the error message if it's user-friendly and not too long
+        userMessage = error.message;
+      }
       
       return {
         success: false,
-        error: error.message,
-        originalPrompt,
+        error: userMessage,
+        originalPrompt: originalPrompt,
         platform
       };
     }
   }
 
   /**
-   * Build the request body for Gemini API
-   * @param {string} originalPrompt - Original prompt
-   * @param {Object} strategy - Enhancement strategy
-   * @param {Object} options - Additional options
-   * @returns {Object} Request body
-   */
-  buildRequestBody(originalPrompt, strategy, options) {
-    const enhancementLevel = options.enhancementLevel || 'moderate';
-    
-    const levelInstructions = {
-      basic: 'Make minimal improvements focusing on clarity and basic structure.',
-      moderate: 'Enhance significantly with better structure, context, and specific instructions.',
-      advanced: 'Completely transform into a highly effective, comprehensive prompt with examples and detailed guidance.'
-    };
-
-    const systemPrompt = `${strategy.systemPrompt}
-
-Enhancement Level: ${enhancementLevel}
-Instructions: ${levelInstructions[enhancementLevel]}
-
-Rules:
-1. Return ONLY the enhanced prompt, no explanations or meta-commentary
-2. Preserve the user's core intent and meaning
-3. Make the prompt more specific, actionable, and effective
-4. Add relevant context and constraints
-5. Use clear, professional language
-6. If the original prompt is already well-structured, make subtle improvements
-
-Original prompt to enhance:`;
-
-    return {
-      contents: [
-        {
-          parts: [
-            {
-              text: `${systemPrompt}\n\n"${originalPrompt}"`
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.3, // Lower temperature for more consistent results
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 1024,
-        stopSequences: []
-      },
-      safetySettings: [
-        {
-          category: "HARM_CATEGORY_HARASSMENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-          category: "HARM_CATEGORY_HATE_SPEECH",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
-        }
-      ]
-    };
-  }
-
-  /**
    * Make API call with retry logic
-   * @param {string} apiKey - API key
-   * @param {Object} requestBody - Request body
+   * @param {Object} requestData - Request data
    * @returns {Promise<Object>} API response
    */
-  async makeApiCallWithRetry(apiKey, requestBody) {
+  async makeApiCallWithRetry(requestData) {
     let lastError;
     
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
@@ -158,24 +125,24 @@ Original prompt to enhance:`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
         
-        const response = await fetch(`${this.baseUrl}?key=${apiKey}`, {
+        const response = await fetch(`${this.baseUrl}/enhance`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify(requestData),
           signal: controller.signal
         });
         
         clearTimeout(timeoutId);
         
+        const data = await response.json();
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`API Error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+          throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('✅ API call successful');
+        console.log('✅ Backend API call successful');
         return data;
         
       } catch (error) {
@@ -183,8 +150,8 @@ Original prompt to enhance:`;
         console.warn(`⚠️ API attempt ${attempt} failed:`, error.message);
         
         // Don't retry on certain errors
-        if (error.message.includes('401') || error.message.includes('403')) {
-          throw new Error('Invalid API key. Please check your Gemini API key.');
+        if (error.message.includes('400') || error.message.includes('Prompt')) {
+          throw error; // Bad request - don't retry
         }
         
         if (error.message.includes('429')) {
@@ -202,43 +169,94 @@ Original prompt to enhance:`;
   }
 
   /**
-   * Extract enhanced prompt from API response
-   * @param {Object} response - API response
-   * @returns {string} Enhanced prompt
+   * Test backend API connection
+   * @returns {Promise<Object>} Test result
    */
-  extractEnhancedPrompt(response) {
+  async testConnection() {
     try {
-      const candidates = response.candidates;
-      if (!candidates || candidates.length === 0) {
-        throw new Error('No candidates in API response');
+      console.log('🔍 Testing backend API connection...');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `API Health Check Failed (${response.status}): ${data.error || response.statusText}`
+        };
       }
-      
-      const content = candidates[0].content;
-      if (!content || !content.parts || content.parts.length === 0) {
-        throw new Error('No content in API response');
-      }
-      
-      const enhancedPrompt = content.parts[0].text.trim();
-      
-      if (!enhancedPrompt) {
-        throw new Error('Empty response from API');
-      }
-      
-      return enhancedPrompt;
+
+      console.log('✅ Backend API connection successful');
+      return {
+        success: true,
+        message: 'Backend API is running',
+        data: data
+      };
+
     } catch (error) {
-      console.error('❌ Error extracting enhanced prompt:', error);
-      throw new Error('Failed to process API response');
+      console.error('❌ Backend API connection failed:', error);
+      
+      let errorMessage = 'Cannot connect to enhancement service';
+      if (error.name === 'AbortError') {
+        errorMessage = 'Connection timeout';
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error - check if backend is running';
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
     }
   }
 
   /**
-   * Estimate token count for a text
-   * @param {string} text - Text to estimate
-   * @returns {number} Estimated token count
+   * Update usage statistics
+   * @param {string} platform - Platform name
+   * @param {boolean} success - Whether the request was successful
    */
-  estimateTokenCount(text) {
-    // Rough estimation: ~4 characters per token for English text
-    return Math.ceil(text.length / 4);
+  async updateUsageStats(platform, success) {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        const storageManager = new StorageManager();
+        await storageManager.updateUsageStats(platform, success);
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to update usage stats:', error);
+    }
+  }
+
+  /**
+   * Get API usage information
+   * @returns {Promise<Object>} Usage information
+   */
+  async getApiUsage() {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        const storageManager = new StorageManager();
+        const stats = await storageManager.getUsageStats();
+        
+        return {
+          totalRequests: stats.total,
+          successfulRequests: stats.successful,
+          failureRate: stats.total > 0 ? ((stats.total - stats.successful) / stats.total * 100).toFixed(1) : 0,
+          platformBreakdown: stats.platforms,
+          lastUsed: stats.lastUsed
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Error getting API usage:', error);
+      return null;
+    }
   }
 
   /**
@@ -251,83 +269,25 @@ Original prompt to enhance:`;
   }
 
   /**
-   * Test API connection
-   * @param {string} apiKey - API key to test
-   * @returns {Promise<Object>} Test result
+   * Get backend API status
+   * @returns {Promise<Object>} Status information
    */
-  async testApiConnection(apiKey) {
+  async getBackendStatus() {
     try {
-      const testPrompt = 'Hello';
-      const requestBody = {
-        contents: [
-          {
-            parts: [
-              {
-                text: 'Respond with "API test successful" if you can see this message.'
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 10
-        }
-      };
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const response = await fetch(`${this.baseUrl}?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          error: `API Error (${response.status}): ${errorData.error?.message || 'Unknown error'}`
-        };
-      }
-
+      const response = await fetch(`${this.baseUrl}/health`);
       const data = await response.json();
+      
       return {
-        success: true,
-        message: 'API connection successful',
-        response: data
+        isOnline: response.ok,
+        version: data.version,
+        timestamp: data.timestamp,
+        message: data.message
       };
-
     } catch (error) {
       return {
-        success: false,
+        isOnline: false,
         error: error.message
       };
-    }
-  }
-
-  /**
-   * Get API usage information
-   * @returns {Promise<Object>} Usage information
-   */
-  async getApiUsage() {
-    try {
-      const stats = await this.storageManager.getUsageStats();
-      return {
-        totalRequests: stats.total,
-        successfulRequests: stats.successful,
-        failureRate: stats.total > 0 ? ((stats.total - stats.successful) / stats.total * 100).toFixed(1) : 0,
-        platformBreakdown: stats.platforms,
-        lastUsed: stats.lastUsed
-      };
-    } catch (error) {
-      console.error('❌ Error getting API usage:', error);
-      return null;
     }
   }
 }

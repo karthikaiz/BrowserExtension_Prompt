@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Universal Prompt Enhancer
 
 🚀 **Transform your rough prompts into powerful, effective instructions for any LLM platform!**
@@ -411,3 +412,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ for the AI community**
 
 *Transform your prompts, transform your conversations!* 
+=======
+# BrowserExtension_Prompt
+>>>>>>> 1b922ac0b7cf8ca5d6584bd25f644a6a3942fdc4

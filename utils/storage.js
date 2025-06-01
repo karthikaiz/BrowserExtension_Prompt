@@ -7,72 +7,9 @@ class StorageManager {
   constructor() {
     this.storage = chrome.storage.sync;
     this.keys = {
-      API_KEY: 'gemini_api_key',
       SETTINGS: 'user_settings',
       USAGE_STATS: 'usage_stats'
     };
-  }
-
-  /**
-   * Save Gemini API key
-   * @param {string} apiKey - The API key to save
-   * @returns {Promise<boolean>} Success status
-   */
-  async saveApiKey(apiKey) {
-    try {
-      await this.storage.set({ [this.keys.API_KEY]: apiKey });
-      console.log('✅ API key saved successfully');
-      return true;
-    } catch (error) {
-      console.error('❌ Error saving API key:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get Gemini API key
-   * @returns {Promise<string|null>} The API key or null if not found
-   */
-  async getApiKey() {
-    try {
-      const result = await this.storage.get(['geminiApiKey']);
-      // Add fallback to hardcoded key for testing
-      return result.geminiApiKey || 'your_actual_gemini_api_key_here'; // Replace with your actual API key
-    } catch (error) {
-      console.error('Error getting API key:', error);
-      return 'your_actual_gemini_api_key_here'; // Replace with your actual API key
-    }
-  }
-
-  /**
-   * Remove API key
-   * @returns {Promise<boolean>} Success status
-   */
-  async removeApiKey() {
-    try {
-      await this.storage.remove([this.keys.API_KEY]);
-      console.log('✅ API key removed successfully');
-      return true;
-    } catch (error) {
-      console.error('❌ Error removing API key:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Validate API key format
-   * @param {string} apiKey - The API key to validate
-   * @returns {boolean} True if format is valid
-   */
-  validateApiKey(apiKey) {
-    if (!apiKey || typeof apiKey !== 'string') {
-      return false;
-    }
-
-    // Basic validation for Gemini API key format
-    // Gemini API keys typically start with 'AIza' and are about 39 characters long
-    const geminiKeyPattern = /^AIza[0-9A-Za-z_-]{35}$/;
-    return geminiKeyPattern.test(apiKey.trim());
   }
 
   /**
@@ -113,11 +50,8 @@ class StorageManager {
    */
   getDefaultSettings() {
     return {
-      enableAutoEnhancement: false,
-      showSuccessAnimation: true,
-      buttonPosition: 'top-right',
       enhancementLevel: 'moderate', // basic, moderate, advanced
-      enableAnalytics: true,
+      showSuccessAnimation: true,
       theme: 'auto' // light, dark, auto
     };
   }
