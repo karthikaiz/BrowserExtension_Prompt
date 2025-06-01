@@ -1,0 +1,302 @@
+/* Universal Prompt Enhancer - Content Styles */
+
+/* Main enhancement button */
+.upe-enhancement-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000;
+  user-select: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.upe-enhancement-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #7c4dff 0%, #e91e63 100%);
+}
+
+.upe-enhancement-btn:active {
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+/* Button states */
+.upe-enhancement-btn.loading {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  animation: upe-pulse 1.5s ease-in-out infinite;
+}
+
+.upe-enhancement-btn.success {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  animation: upe-success-pulse 0.6s ease-out;
+}
+
+.upe-enhancement-btn.error {
+  background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+  animation: upe-shake 0.5s ease-in-out;
+}
+
+/* Button animations */
+@keyframes upe-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes upe-success-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes upe-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes upe-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Loading spinner animation */
+.upe-enhancement-btn.loading::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: upe-spin 1s linear infinite;
+}
+
+.upe-enhancement-btn.loading .upe-btn-icon {
+  opacity: 0;
+}
+
+/* Button wrapper for relative positioning */
+.upe-textarea-wrapper {
+  position: relative !important;
+}
+
+/* Tooltip */
+.upe-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 10001;
+  margin-bottom: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.upe-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.upe-enhancement-btn:hover .upe-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Progress indicator */
+.upe-progress {
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #00bcd4, #4caf50);
+  border-radius: 0 0 8px 8px;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.upe-enhancement-btn.loading .upe-progress {
+  animation: upe-progress 2s ease-in-out infinite;
+}
+
+@keyframes upe-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  50% {
+    transform: scaleX(0.7);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .upe-enhancement-btn {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  }
+  
+  .upe-enhancement-btn:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .upe-enhancement-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .upe-tooltip {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Platform-specific adjustments */
+
+/* ChatGPT */
+.upe-chatgpt .upe-enhancement-btn {
+  top: 12px;
+  right: 48px; /* Avoid conflict with send button */
+}
+
+/* Claude */
+.upe-claude .upe-enhancement-btn {
+  top: 8px;
+  right: 8px;
+}
+
+/* Gemini */
+.upe-gemini .upe-enhancement-btn {
+  top: 8px;
+  right: 48px;
+}
+
+/* Microsoft Copilot */
+.upe-copilot .upe-enhancement-btn {
+  top: 8px;
+  right: 48px;
+}
+
+/* Grok */
+.upe-grok .upe-enhancement-btn {
+  top: 8px;
+  right: 48px;
+}
+
+/* DeepSeek */
+.upe-deepseek .upe-enhancement-btn {
+  top: 8px;
+  right: 48px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .upe-enhancement-btn {
+    border: 2px solid currentColor;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  
+  .upe-enhancement-btn:hover {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .upe-enhancement-btn,
+  .upe-tooltip,
+  .upe-progress {
+    transition: none;
+    animation: none;
+  }
+  
+  .upe-enhancement-btn:hover {
+    transform: none;
+  }
+}
+
+/* Focus indicators for accessibility */
+.upe-enhancement-btn:focus {
+  outline: 2px solid #4A90E2;
+  outline-offset: 2px;
+}
+
+.upe-enhancement-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* RTL language support */
+[dir="rtl"] .upe-enhancement-btn {
+  right: auto;
+  left: 8px;
+}
+
+[dir="rtl"] .upe-chatgpt .upe-enhancement-btn {
+  left: 48px;
+}
+
+[dir="rtl"] .upe-gemini .upe-enhancement-btn,
+[dir="rtl"] .upe-copilot .upe-enhancement-btn,
+[dir="rtl"] .upe-grok .upe-enhancement-btn,
+[dir="rtl"] .upe-deepseek .upe-enhancement-btn {
+  left: 48px;
+} 
