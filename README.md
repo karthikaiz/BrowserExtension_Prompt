@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Universal Prompt Enhancer
 
 🚀 **Transform your rough prompts into powerful, effective instructions for any LLM platform!**
