@@ -5,7 +5,6 @@
 
 Universal Prompt Enhancer is a Chrome extension that adds a magic ✨ button to LLM chatbot websites. When you type 5+ characters, the button appears in the upper right corner of your text box. Click it to instantly enhance your rough prompts using our AI-powered backend with platform-specific optimizations.
 
-![Extension Demo](https://x.com/Dyauspitr12/status/1929214488697258448)
 
 ## ✨ Why Use Universal Prompt Enhancer?
 
@@ -306,19 +305,6 @@ Include:
 - Website where issue occurs
 - Console error messages
 - Steps to reproduce
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Google Gemini Team** - For the powerful AI technology
-- **Chrome Extensions Team** - For the robust platform
-- **LLM Communities** - For feedback and testing
-- **Open Source Contributors** - For inspiration
-
----
 
 **Made with ❤️ for the AI community**
 
