@@ -17,6 +17,8 @@
     "https://gemini.google.com/*",
     "https://copilot.microsoft.com/*",
     "https://grok.x.ai/*",
+    "https://grok.com/*",
+    "https://x.com/*",
     "https://chat.deepseek.com/*",
     "https://generativelanguage.googleapis.com/*"
   ],
@@ -34,6 +36,8 @@
         "https://gemini.google.com/*",
         "https://copilot.microsoft.com/*",
         "https://grok.x.ai/*",
+        "https://grok.com/*",
+        "https://x.com/*",
         "https://chat.deepseek.com/*"
       ],
       "js": [
@@ -75,6 +79,8 @@
         "https://gemini.google.com/*",
         "https://copilot.microsoft.com/*",
         "https://grok.x.ai/*",
+        "https://grok.com/*",
+        "https://x.com/*",
         "https://chat.deepseek.com/*"
       ]
     }

@@ -37,7 +37,8 @@ class PlatformDetector {
     if (hostname.includes('copilot.microsoft.com')) {
       return this.platforms.COPILOT;
     }
-    if (hostname.includes('grok.x.ai')) {
+    if (hostname.includes('grok.x.ai') || hostname.includes('grok.com') || 
+        (hostname.includes('x.com') && url.includes('/i/grok'))) {
       return this.platforms.GROK;
     }
     if (hostname.includes('chat.deepseek.com')) {
@@ -140,6 +141,7 @@ class PlatformDetector {
       ],
       [this.platforms.GROK]: [
         'textarea[placeholder*="Ask"]',
+        'textarea[placeholder*="anything"]',
         '.chat-input textarea',
         'textarea'
       ],

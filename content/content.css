@@ -1,6 +1,6 @@
 /* Universal Prompt Enhancer - Content Styles */
 
-/* Main enhancement button */
+/* Main enhancement button - POSITIONED RELATIVE TO TEXT BOX */
 .upe-enhancement-btn {
   position: absolute !important;
   top: 8px !important;
@@ -11,48 +11,67 @@
   border-radius: 8px !important;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   cursor: pointer !important;
-  display: flex !important;
+  display: none !important; /* Hidden by default */
   align-items: center !important;
   justify-content: center !important;
   font-size: 16px !important;
   color: white !important;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   z-index: 99999 !important;
   user-select: none !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   pointer-events: auto !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
+/* Show button when active */
+.upe-enhancement-btn.visible {
+  display: flex !important;
+  animation: upe-fade-in 0.2s ease-out;
+}
+
+/* Hover effects */
 .upe-enhancement-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  background: linear-gradient(135deg, #7c4dff 0%, #e91e63 100%);
+  transform: translateY(-1px) scale(1.05) !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+  background: linear-gradient(135deg, #7c4dff 0%, #e91e63 100%) !important;
 }
 
 .upe-enhancement-btn:active {
-  transform: translateY(0) scale(0.95);
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  transform: translateY(0) scale(0.95) !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
 }
 
 /* Button states */
 .upe-enhancement-btn.loading {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
   animation: upe-pulse 1.5s ease-in-out infinite;
 }
 
 .upe-enhancement-btn.success {
-  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%) !important;
   animation: upe-success-pulse 0.6s ease-out;
 }
 
 .upe-enhancement-btn.error {
-  background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+  background: linear-gradient(135deg, #f44336 0%, #c62828 100%) !important;
   animation: upe-shake 0.5s ease-in-out;
 }
 
 /* Button animations */
+@keyframes upe-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes upe-pulse {
   0%, 100% {
     transform: scale(1);
@@ -69,7 +88,7 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.15);
   }
   100% {
     transform: scale(1);
@@ -81,10 +100,10 @@
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-4px);
+    transform: translateX(-3px);
   }
   75% {
-    transform: translateX(4px);
+    transform: translateX(3px);
   }
 }
 
@@ -119,49 +138,15 @@
   overflow: visible !important;
 }
 
-/* Tooltip */
-.upe-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 10001;
-  margin-bottom: 5px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.upe-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: rgba(0, 0, 0, 0.9);
-}
-
-.upe-enhancement-btn:hover .upe-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* Progress indicator */
 .upe-progress {
   position: absolute;
-  bottom: -3px;
-  left: 0;
-  height: 3px;
+  bottom: -2px;
+  left: 1px;
+  right: 1px;
+  height: 2px;
   background: linear-gradient(90deg, #00bcd4, #4caf50);
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 6px 6px;
   transform-origin: left;
   transform: scaleX(0);
   transition: transform 0.3s ease;
@@ -186,27 +171,23 @@
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .upe-enhancement-btn {
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
   }
   
   .upe-enhancement-btn:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5) !important;
   }
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .upe-enhancement-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-    top: 6px;
-    right: 6px;
-  }
-  
-  .upe-tooltip {
-    font-size: 11px;
-    padding: 4px 8px;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+    top: 6px !important;
+    right: 6px !important;
   }
 }
 
@@ -214,14 +195,14 @@
 
 /* ChatGPT */
 .upe-chatgpt .upe-enhancement-btn {
-  top: 12px !important;
-  right: 50px !important;
+  top: 8px !important;
+  right: 45px !important;
 }
 
 /* Claude */
 .upe-claude .upe-enhancement-btn {
   top: 8px !important;
-  right: 50px !important;
+  right: 45px !important;
 }
 
 /* Gemini */
@@ -232,73 +213,74 @@
 
 /* Microsoft Copilot */
 .upe-copilot .upe-enhancement-btn {
-  top: 8px;
-  right: 48px;
+  top: 8px !important;
+  right: 45px !important;
 }
 
 /* Grok */
 .upe-grok .upe-enhancement-btn {
-  top: 8px;
-  right: 48px;
+  top: 8px !important;
+  right: 45px !important;
 }
 
 /* DeepSeek */
 .upe-deepseek .upe-enhancement-btn {
-  top: 8px;
-  right: 48px;
+  top: 8px !important;
+  right: 45px !important;
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .upe-enhancement-btn {
-    border: 2px solid currentColor;
-    background: ButtonFace;
-    color: ButtonText;
+    border: 2px solid currentColor !important;
+    background: ButtonFace !important;
+    color: ButtonText !important;
   }
   
   .upe-enhancement-btn:hover {
-    background: Highlight;
-    color: HighlightText;
+    background: Highlight !important;
+    color: HighlightText !important;
   }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .upe-enhancement-btn,
-  .upe-tooltip,
   .upe-progress {
-    transition: none;
-    animation: none;
+    transition: none !important;
+    animation: none !important;
   }
   
   .upe-enhancement-btn:hover {
-    transform: none;
+    transform: none !important;
+  }
+  
+  .upe-enhancement-btn.visible {
+    animation: none !important;
   }
 }
 
 /* Focus indicators for accessibility */
 .upe-enhancement-btn:focus {
-  outline: 2px solid #4A90E2;
-  outline-offset: 2px;
+  outline: 2px solid #4A90E2 !important;
+  outline-offset: 2px !important;
 }
 
 .upe-enhancement-btn:focus:not(:focus-visible) {
-  outline: none;
+  outline: none !important;
 }
 
 /* RTL language support */
 [dir="rtl"] .upe-enhancement-btn {
-  right: auto;
-  left: 8px;
+  right: auto !important;
+  left: 8px !important;
 }
 
-[dir="rtl"] .upe-chatgpt .upe-enhancement-btn {
-  left: 48px;
-}
-
+[dir="rtl"] .upe-chatgpt .upe-enhancement-btn,
+[dir="rtl"] .upe-claude .upe-enhancement-btn,
 [dir="rtl"] .upe-gemini .upe-enhancement-btn,
 [dir="rtl"] .upe-copilot .upe-enhancement-btn,
 [dir="rtl"] .upe-grok .upe-enhancement-btn,
 [dir="rtl"] .upe-deepseek .upe-enhancement-btn {
-  left: 48px;
+  left: 45px !important;
 } 

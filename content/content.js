@@ -15,7 +15,7 @@ class PromptEnhancer {
     this.settings = null;
     this.isInitialized = false;
     
-    // ✅ NEW: Single button tracking approach
+    // ✅ Button tracking approach
     this.currentTextarea = null;
     this.currentButton = null;
     this.lastTextContent = '';
@@ -39,7 +39,7 @@ class PromptEnhancer {
       // Add platform class to body for CSS targeting
       document.body.classList.add(`upe-${this.currentPlatform}`);
       
-      // ✅ NEW: Simple monitoring approach
+      // ✅ Start monitoring for textareas
       this.startSimpleMonitoring();
       
       this.isInitialized = true;
@@ -51,7 +51,7 @@ class PromptEnhancer {
   }
 
   /**
-   * ✅ NEW: Simple monitoring without aggressive scanning
+   * ✅ Simple monitoring without aggressive scanning
    */
   startSimpleMonitoring() {
     // Monitor input events on textareas
@@ -78,16 +78,16 @@ class PromptEnhancer {
     // ✅ Only scan occasionally for new textareas
     setInterval(() => {
       this.findNewTextarea();
-    }, 3000); // Check every 3 seconds, not constantly
+    }, 3000); // Check every 3 seconds
   }
 
   /**
-   * ✅ NEW: Handle text input events
+   * ✅ Handle text input events
    */
   handleTextInput(textarea) {
     const text = this.getTextContent(textarea);
     
-    // ✅ Only show button if there's meaningful text
+    // ✅ Show button if there's meaningful text (5+ characters)
     if (text.trim().length >= 5) {
       this.showButton(textarea);
     } else {
@@ -96,7 +96,7 @@ class PromptEnhancer {
   }
 
   /**
-   * ✅ NEW: Handle textarea focus
+   * ✅ Handle textarea focus
    */
   handleTextareaFocus(textarea) {
     // Set as current textarea but don't show button yet
@@ -111,7 +111,7 @@ class PromptEnhancer {
   }
 
   /**
-   * ✅ NEW: Handle textarea blur
+   * ✅ Handle textarea blur
    */
   handleTextareaBlur(textarea) {
     // Keep button if there's text, hide if empty
@@ -124,11 +124,12 @@ class PromptEnhancer {
   }
 
   /**
-   * ✅ NEW: Show button for specific textarea
+   * ✅ Show button for specific textarea
    */
   showButton(textarea) {
     // If button already exists for this textarea, don't create another
     if (this.currentButton && this.currentTextarea === textarea) {
+      this.currentButton.classList.add('visible');
       return;
     }
 
@@ -137,60 +138,49 @@ class PromptEnhancer {
 
     // Create new button
     this.currentTextarea = textarea;
-    this.currentButton = this.createStableButton(textarea);
+    this.currentButton = this.createButton(textarea);
     
     // Add to textarea's wrapper
     const wrapper = this.ensureWrapper(textarea);
     wrapper.appendChild(this.currentButton);
     
+    // Show button
+    setTimeout(() => {
+      this.currentButton.classList.add('visible');
+    }, 10);
+    
     console.log('✨ Button shown for textarea');
   }
 
   /**
-   * ✅ NEW: Hide current button
+   * ✅ Hide current button
    */
   hideButton() {
     if (this.currentButton) {
-      this.currentButton.remove();
-      this.currentButton = null;
+      this.currentButton.classList.remove('visible');
+      setTimeout(() => {
+        if (this.currentButton) {
+          this.currentButton.remove();
+          this.currentButton = null;
+        }
+      }, 200); // Wait for animation
     }
   }
 
   /**
-   * ✅ NEW: Create a stable button that doesn't get recreated
+   * ✅ Create button positioned in text box corner
    */
-  createStableButton(textElement) {
+  createButton(textElement) {
     const button = document.createElement('button');
     button.className = 'upe-enhancement-btn';
     button.setAttribute('title', 'Enhance prompt with AI');
     button.setAttribute('aria-label', 'Enhance prompt with AI');
     button.type = 'button';
 
-    // Add icon and tooltip
+    // Add icon and progress (NO TOOLTIP)
     button.innerHTML = `
       <span class="upe-btn-icon">✨</span>
-      <div class="upe-tooltip">Enhance with AI</div>
       <div class="upe-progress"></div>
-    `;
-
-    // ✅ IMPROVED: Stable styles
-    button.style.cssText = `
-      position: absolute !important;
-      top: 8px !important;
-      right: 45px !important;
-      width: 32px !important;
-      height: 32px !important;
-      border: none !important;
-      border-radius: 8px !important;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      cursor: pointer !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-size: 16px !important;
-      color: white !important;
-      z-index: 99999 !important;
-      transition: transform 0.2s ease !important;
     `;
 
     // Add click handler
@@ -201,20 +191,94 @@ class PromptEnhancer {
       await this.handleButtonClick(textElement, button);
     });
 
-    // Prevent button from disappearing on hover
+    // Hover effects
     button.addEventListener('mouseenter', () => {
-      button.style.transform = 'scale(1.1)';
+      button.style.transform = 'translateY(-1px) scale(1.05)';
     });
 
     button.addEventListener('mouseleave', () => {
-      button.style.transform = 'scale(1)';
+      button.style.transform = '';
     });
 
     return button;
   }
 
   /**
-   * ✅ NEW: Handle button click
+   * Find new textareas (less aggressive)
+   */
+  findNewTextarea() {
+    const selectors = this.platformDetector.getTextareaSelectors(this.currentPlatform);
+    
+    for (const selector of selectors) {
+      try {
+        const elements = document.querySelectorAll(selector);
+        for (const element of elements) {
+          if (this.isTextElement(element) && element !== this.currentTextarea) {
+            // Found a new textarea, but don't show button yet
+            // It will show when user starts typing
+            break;
+          }
+        }
+      } catch (error) {
+        // Ignore selector errors
+      }
+    }
+  }
+
+  /**
+   * Check if element is a text input element
+   */
+  isTextElement(element) {
+    return element.tagName === 'TEXTAREA' || 
+           element.getAttribute('contenteditable') === 'true' ||
+           element.classList.contains('ProseMirror') ||
+           element.classList.contains('ql-editor');
+  }
+
+  /**
+   * Ensure element has a wrapper for positioning
+   */
+  ensureWrapper(element) {
+    // Check if element already has a wrapper
+    const parent = element.parentElement;
+    if (parent && parent.classList.contains('upe-textarea-wrapper')) {
+      return parent;
+    }
+    
+    // Check if parent already has relative positioning
+    const computedStyle = window.getComputedStyle(parent);
+    if (computedStyle.position === 'relative' || computedStyle.position === 'absolute') {
+      parent.classList.add('upe-textarea-wrapper');
+      return parent;
+    }
+
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'upe-textarea-wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.style.overflow = 'visible';
+    
+    // Insert wrapper
+    parent.insertBefore(wrapper, element);
+    wrapper.appendChild(element);
+    
+    return wrapper;
+  }
+
+  /**
+   * Get text content from element
+   */
+  getTextContent(element) {
+    if (element.tagName === 'TEXTAREA') {
+      return element.value;
+    } else if (element.contentEditable === 'true') {
+      return element.textContent || element.innerText;
+    }
+    return '';
+  }
+
+  /**
+   * ✅ Handle button click
    */
   async handleButtonClick(textElement, button) {
     console.log('🌟 Enhancement button clicked!');
@@ -261,7 +325,7 @@ class PromptEnhancer {
   }
 
   /**
-   * ✅ NEW: Replace text content properly
+   * ✅ Replace text content properly
    */
   replaceTextContent(element, newText) {
     console.log('🔄 Replacing text content...');
@@ -295,74 +359,6 @@ class PromptEnhancer {
   }
 
   /**
-   * Find new textareas (less aggressive)
-   */
-  findNewTextarea() {
-    const selectors = this.platformDetector.getTextareaSelectors(this.currentPlatform);
-    
-    for (const selector of selectors) {
-      try {
-        const elements = document.querySelectorAll(selector);
-        for (const element of elements) {
-          if (this.isTextElement(element) && element !== this.currentTextarea) {
-            // Found a new textarea, but don't show button yet
-            // It will show when user starts typing
-            break;
-          }
-        }
-      } catch (error) {
-        // Ignore selector errors
-      }
-    }
-  }
-
-  /**
-   * Check if element is a text input element
-   */
-  isTextElement(element) {
-    return element.tagName === 'TEXTAREA' || 
-           element.getAttribute('contenteditable') === 'true' ||
-           element.classList.contains('ProseMirror') ||
-           element.classList.contains('ql-editor');
-  }
-
-  /**
-   * Ensure element has a wrapper for positioning
-   */
-  ensureWrapper(element) {
-    const parent = element.parentElement;
-    
-    // Check if parent already has relative positioning
-    const computedStyle = window.getComputedStyle(parent);
-    if (computedStyle.position === 'relative' || computedStyle.position === 'absolute') {
-      return parent;
-    }
-
-    // Create wrapper
-    const wrapper = document.createElement('div');
-    wrapper.className = 'upe-textarea-wrapper';
-    wrapper.style.position = 'relative';
-    
-    // Insert wrapper
-    parent.insertBefore(wrapper, element);
-    wrapper.appendChild(element);
-    
-    return wrapper;
-  }
-
-  /**
-   * Get text content from element
-   */
-  getTextContent(element) {
-    if (element.tagName === 'TEXTAREA') {
-      return element.value;
-    } else if (element.contentEditable === 'true') {
-      return element.textContent || element.innerText;
-    }
-    return '';
-  }
-
-  /**
    * Set button state
    */
   setButtonState(button, state) {
@@ -374,29 +370,24 @@ class PromptEnhancer {
       button.classList.add(state);
     }
 
-    // Update icon and tooltip
+    // Update icon only (no tooltip)
     const icon = button.querySelector('.upe-btn-icon');
-    const tooltip = button.querySelector('.upe-tooltip');
     
     switch (state) {
       case 'loading':
         icon.textContent = '⏳';
-        tooltip.textContent = 'Enhancing...';
         button.disabled = true;
         break;
       case 'success':
         icon.textContent = '✅';
-        tooltip.textContent = 'Enhanced!';
         button.disabled = false;
         break;
       case 'error':
         icon.textContent = '❌';
-        tooltip.textContent = 'Error - Click to retry';
         button.disabled = false;
         break;
       default:
         icon.textContent = '✨';
-        tooltip.textContent = 'Enhance with AI';
         button.disabled = false;
     }
   }
@@ -407,11 +398,7 @@ class PromptEnhancer {
   showError(button, message) {
     this.setButtonState(button, 'error');
     
-    // Update tooltip with error message
-    const tooltip = button.querySelector('.upe-tooltip');
-    tooltip.textContent = message;
-    
-    // Reset after delay
+    // Reset after delay (no tooltip to update)
     setTimeout(() => {
       this.setButtonState(button, 'normal');
     }, 3000);
